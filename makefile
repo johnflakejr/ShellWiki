@@ -1,0 +1,13 @@
+all: shellwiki
+CFLAGS = -lcurl
+OBJ = main.o
+OUTPUT = shellwiki
+
+shellwiki: $(OBJ) 
+	gcc $(CFLAGS) $(OBJ) -o $(OUTPUT)
+
+main.o: main.c
+	gcc -c main.c
+
+clean: 
+	rm -rf $(OBJ) $(OUTPUT)
