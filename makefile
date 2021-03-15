@@ -1,6 +1,6 @@
 all: shellwiki
 CFLAGS = -lcurl
-OBJ = main.o
+OBJ = main.o parser.o
 OUTPUT = shellwiki
 
 shellwiki: $(OBJ) 
@@ -8,6 +8,9 @@ shellwiki: $(OBJ)
 
 main.o: main.c
 	gcc -c main.c
+
+parser.o: parser.c
+	gcc -c parser.c
 
 clean: 
 	rm -rf $(OBJ) $(OUTPUT)

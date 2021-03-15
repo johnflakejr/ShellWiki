@@ -2,39 +2,13 @@
 #include <curl/curl.h>
 #include <stdlib.h> 
 #include <string.h> 
+#include "parser.h"
 
 #define PAGE_SIZE 4096 
 #define REQ_SIZE 256
 #define DEBUG 1
 
-char * remove_html_metadata(char * input)
-{
-  char * output = calloc(strlen(input), sizeof(char));
-  int iter = 0; 
-  int outindex = 0; 
-  int meta = 0; 
-  for (iter = 0; iter < strlen(input); iter++)
-  {
-    if ('<' == input[iter])
-    {
-      meta = 1; 
-      continue; 
-    }
-    
-    if ('>' == input[iter])
-    {
-      meta = 0;
-      continue; 
-    }
 
-    if (!meta)
-    {
-      output[outindex] = input[iter]; 
-      outindex++;
-    }
-  }
-  return output; 
-}
 
 /*
   Prints how to use this simple program
@@ -53,10 +27,12 @@ static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 
 #ifdef DEBUG
-  printf("GOT %lu bytes of data. \n", size); 
-  printf("GOT %lu nmemb. \n", nmemb); 
+  printf("GOT %lu bytes of data. \n\n\n", size); 
+  printf("GOT %lu nmemb. \n\n\n", nmemb); 
   char * resp = remove_html_metadata(ptr); 
   printf("GOT DATA: %s\n", resp); 
+
+  free(resp); 
 #endif
 
   return 0; 
@@ -65,7 +41,7 @@ static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void *userdata)
 int main(int argc, char ** argv)
 {
 
-  if (2 > argc)
+  if (2 != argc)
   {
     usage(); 
     return 1; 
@@ -82,6 +58,7 @@ int main(int argc, char ** argv)
   }
 
   char * request_url = calloc (REQ_SIZE, sizeof(char)); 
+
   if (NULL == request_url)
   {
     return 1; 
@@ -101,6 +78,7 @@ int main(int argc, char ** argv)
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
   char * response = calloc (PAGE_SIZE, sizeof(char)); 
+
   if (NULL == response)
   {
     return 1; 
@@ -120,3 +98,6 @@ int main(int argc, char ** argv)
 
   return 0;
 }
+
+//End of file
+
