@@ -8,8 +8,6 @@
 #define REQ_SIZE 256
 #define DEBUG 1
 
-
-
 /*
   Prints how to use this simple program
 */
@@ -19,29 +17,68 @@ void usage()
   printf("./shellwiki [thing] \n"); 
 }
 
+/*
+  Given the arguments, parse and return the_page_name
+*/
+char * combine_args_to_page(int argc, char ** argv)
+{
+
+  //Initialize length to the first arg.  Reallocate as needed. 
+  size_t total_len = 0;
+  char * page = NULL; 
+  int    i; 
+
+  //Combine arguments
+  for (i = 1; i < argc; i++)
+  {
+    size_t cur_len = strlen(argv[i]); 
+    total_len += cur_len; 
+
+    page = realloc(page, total_len + 1); 
+    if (NULL == page)
+    {
+      return NULL; 
+    }
+
+    strncpy(page + (total_len - cur_len), argv[i], cur_len); 
+
+    if (i < (argc - 1))
+    {
+      strncpy(page + (total_len), "_", sizeof(char)); 
+      total_len++; 
+    }
+
+  }
+  page[total_len] = '\0'; 
+  return page; 
+}
 
 /*
   Handle data from the web server: 
+  //TODO: read documentation on libcurl write handlers. 
 */
 static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 
 #ifdef DEBUG
-  printf("GOT %lu bytes of data. \n\n\n", size); 
-  printf("GOT %lu nmemb. \n\n\n", nmemb); 
+  //printf("GOT %lu 'size'. \n\n\n", size); 
+  //printf("GOT %lu nmemb. \n\n\n", nmemb); 
   char * resp = remove_html_metadata(ptr); 
-  printf("GOT DATA: %s\n", resp); 
-
+  printf("%s\n", resp); 
+  //printf("GOT USER DATA: %s\n", userdata); 
   free(resp); 
 #endif
 
-  return 0; 
+  return (size * nmemb);  
 }
 
 int main(int argc, char ** argv)
 {
 
-  if (2 != argc)
+  /*
+    The user needs to supply a search term
+  */
+  if (2 > argc)
   {
     usage(); 
     return 1; 
@@ -64,11 +101,13 @@ int main(int argc, char ** argv)
     return 1; 
   }
 
-  //TODO: use safe string functions lol
-  strcpy(request_url, "https://en.wikipedia.org/wiki/"); 
+  char * base_wiki_url = "https://en.wikipedia.org/wiki/"; 
+  strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
 
   //Article to get: 
-  strcat(request_url, argv[1]); 
+  //TODO: consolidate args into one term
+  char * wiki_page = combine_args_to_page(argc, argv);
+  strncat(request_url, wiki_page, strlen(wiki_page)); 
 
 #ifdef DEBUG 
   printf("Request URL: %s\n",request_url); 
@@ -76,14 +115,6 @@ int main(int argc, char ** argv)
     
   curl_easy_setopt(curl, CURLOPT_URL, request_url);
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-  char * response = calloc (PAGE_SIZE, sizeof(char)); 
-
-  if (NULL == response)
-  {
-    return 1; 
-  }
-
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
 
   res = curl_easy_perform(curl);
@@ -94,7 +125,6 @@ int main(int argc, char ** argv)
   }
 
   curl_easy_cleanup(curl);
-  free(response); 
 
   return 0;
 }

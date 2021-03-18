@@ -1,4 +1,6 @@
 #include "parser.h" 
+#include <stdio.h> 
+#include <stdbool.h> 
 
 char * remove_html_metadata(char * input)
 {
@@ -10,27 +12,35 @@ char * remove_html_metadata(char * input)
 
   int iter = 0; 
   int outindex = 0; 
-  int meta = 0; 
+  bool b_is_meta = false; 
 
+  //TODO: better implement to avoid false positives
   //Skip over instances of <.*>
   for (iter = 0; iter < strlen(input); iter++)
   {
+
+    //Opening tag -> start metadata
     if ('<' == input[iter])
     {
-      meta = 1; 
+      b_is_meta = true; 
       continue; 
     }
     
+    //Closing tag -> done with metadata
     if ('>' == input[iter])
     {
-      meta = 0;
+      b_is_meta = false;
       continue; 
     }
 
-    if (!meta)
+    if (!b_is_meta)
     {
       output[outindex] = input[iter]; 
       outindex++;
+    }
+    else
+    {
+      //HTML tags...
     }
   }
 
