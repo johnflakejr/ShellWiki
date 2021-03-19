@@ -17,9 +17,12 @@ void usage()
   printf("./shellwiki [thing] \n"); 
 }
 
-/*
-  Given the arguments, parse and return the_page_name
-*/
+/**
+ * @brief Given the arguments, parse and return the_page_name
+ * @param argc Argument Count
+ * @param argv Array of arguments
+ * @return char * string for the_combined_page_name
+ */
 char * combine_args_to_page(int argc, char ** argv)
 {
 
@@ -53,17 +56,19 @@ char * combine_args_to_page(int argc, char ** argv)
   return page; 
 }
 
-/*
-  Handle data from the web server: 
-  //TODO: read documentation on libcurl write handlers. 
-*/
+/**
+ * @brief Handle data from the web server.
+ * @param ptr string of raw data received
+ */
 static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
+
+  //Get the response without HTML data. 
+  char * resp = remove_html_metadata(ptr); 
 
 #ifdef DEBUG
   //printf("GOT %lu 'size'. \n\n\n", size); 
   //printf("GOT %lu nmemb. \n\n\n", nmemb); 
-  char * resp = remove_html_metadata(ptr); 
   printf("%s\n", resp); 
   //printf("GOT USER DATA: %s\n", userdata); 
   free(resp); 
@@ -94,18 +99,17 @@ int main(int argc, char ** argv)
     return 1; 
   }
 
-  char * request_url = calloc (REQ_SIZE, sizeof(char)); 
+  char * request_url = calloc(REQ_SIZE, sizeof(char)); 
 
   if (NULL == request_url)
   {
     return 1; 
   }
 
+  //TODO: Account for language. 
   char * base_wiki_url = "https://en.wikipedia.org/wiki/"; 
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
 
-  //Article to get: 
-  //TODO: consolidate args into one term
   char * wiki_page = combine_args_to_page(argc, argv);
   strncat(request_url, wiki_page, strlen(wiki_page)); 
 
