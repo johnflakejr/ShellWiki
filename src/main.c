@@ -148,7 +148,6 @@ int main(int argc, char ** argv)
   make_request(wiki_page, &request); 
 
   //If that didn't work because of disambiguation, handle that: 
-
   if (request.is_disam)
   {
     request.req_type = GET_DISAMBIGUATION;
