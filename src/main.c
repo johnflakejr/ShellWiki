@@ -5,6 +5,7 @@
 #include <string.h> 
 #include <stdbool.h>
 #include "../include/parser.h"
+#include "../include/util.h"
 
 #define PAGE_SIZE 4096 
 #define REQ_SIZE 256
@@ -20,6 +21,7 @@ typedef struct reqdata {
 
   //Response makes it clear that this is a disambiguation
   bool is_disam;
+  char * disam_choice; 
 
 } reqdata; 
 
@@ -27,34 +29,32 @@ typedef struct reqdata {
  * @brief Handle data from the web server.
  * @param ptr string of raw data received
  */
-static size_t handle_disam(char *ptr, size_t size, size_t nmemb, void * userdata)
-{
-  parse_disambiguation(ptr); 
-
-  return (size * nmemb);  
-}
-
-/**
- * @brief Handle data from the web server.
- * @param ptr string of raw data received
- */
 static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void * userdata)
 {
-  char * content = parse_content_from_json(ptr); 
-  
-  if (NULL != content)
-  {
 
-    if (NULL != strstr(content, "may refer to"))
+  if (GET_CONTENT == ((reqdata *) userdata)->req_type)
+  {
+    char * content = parse_content_from_json(ptr); 
+    
+    if (NULL != content)
     {
-      ((reqdata *) userdata)->is_disam = true;
-      printf("There are multiple pages.  Try one of these...\n"); 
+
+      if (NULL != strstr(content, "may refer to"))
+      {
+        ((reqdata *) userdata)->is_disam = true;
+        printf("There are multiple pages.  Try one of these...\n"); 
+      }
+      else
+      {
+        ((reqdata *) userdata)->is_disam = false;
+        printf("%s\n",content); 
+      }
     }
-    else
-    {
-      ((reqdata *) userdata)->is_disam = false;
-      printf("%s\n",content); 
-    }
+  }
+  else
+  {
+    char * req = parse_disambiguation(ptr); 
+    ((reqdata *) userdata)->disam_choice = req;
   }
 
   return (size * nmemb);  
@@ -86,13 +86,20 @@ void make_request(char * wiki_page, reqdata * request_data)
   {
     com = "?action=query&prop=extracts&exsentences=10&exlimit=5&titles=";
   }
+
+  //Disambiguation
   else
   {
-    com = "?action=query&prop=links&titles=";
+    com = "?action=query&prop=links&pllimit=15&titles=";
   }
 
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
   strncat(request_url, com, strlen(com)); 
+
+  //Strip quotes from wiki_page: 
+  
+  wiki_page = remove_quotes(wiki_page); 
+  wiki_page = replace_spaces(wiki_page); 
   strncat(request_url, wiki_page, strlen(wiki_page)); 
   strncat(request_url, flags, strlen(flags));
 
@@ -101,14 +108,11 @@ void make_request(char * wiki_page, reqdata * request_data)
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) request_data);
 
-  if (GET_CONTENT == request_data->req_type)
-  {
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
-  }
-  else
-  {
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_disam);
-  }
+#ifdef DEBUG
+  printf("Request URL: %s\n",request_url); 
+#endif
+
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
 
   res = curl_easy_perform(curl);
 
@@ -119,56 +123,6 @@ void make_request(char * wiki_page, reqdata * request_data)
 
   curl_easy_cleanup(curl);
   free(request_url); 
-}
-
-
-
-/*
-  Prints how to use this simple program
-*/
-void usage()
-{
-  printf("Usage: \n\n"); 
-  printf("./shellwiki [thing] \n"); 
-}
-
-/**
- * @brief Given the arguments, parse and return the_page_name
- * @param argc Argument Count
- * @param argv Array of arguments
- * @return char * string for the_combined_page_name
- */
-char * combine_args_to_page(int argc, char ** argv)
-{
-
-  //Initialize length to the first arg.  Reallocate as needed. 
-  size_t total_len = 0;
-  char * page = NULL; 
-  int    i; 
-
-  //Combine arguments
-  for (i = 1; i < argc; i++)
-  {
-    size_t cur_len = strlen(argv[i]); 
-    total_len += cur_len; 
-
-    page = realloc(page, total_len + 1); 
-    if (NULL == page)
-    {
-      return NULL; 
-    }
-
-    strncpy(page + (total_len - cur_len), argv[i], cur_len); 
-
-    if (i < (argc - 1))
-    {
-      strncpy(page + (total_len), "_", sizeof(char)); 
-      total_len++; 
-    }
-
-  }
-  page[total_len] = '\0'; 
-  return page; 
 }
 
 int main(int argc, char ** argv)
@@ -187,7 +141,10 @@ int main(int argc, char ** argv)
 
   //First, try making a request for the given page.
   reqdata request;
+  request.is_disam = false;
+  request.disam_choice = NULL;
   request.req_type = GET_CONTENT; 
+
   make_request(wiki_page, &request); 
 
   //If that didn't work because of disambiguation, handle that: 
@@ -198,10 +155,13 @@ int main(int argc, char ** argv)
     make_request(wiki_page, &request); 
   }
 
-
+  if (NULL != request.disam_choice)
+  {
+    request.req_type = GET_CONTENT;
+    make_request(request.disam_choice, &request); 
+  }
   
   return 0;
 }
 
 //End of file
-

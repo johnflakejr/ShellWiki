@@ -3,8 +3,65 @@
 #include <stdbool.h> 
 #include <cjson/cJSON.h>
 
-void parse_disambiguation(char * input)
+char * replace_spaces(char * input)
 {
+  if (NULL == input)
+  {
+    return NULL;
+  }
+  
+  size_t len = strlen(input); 
+  char * src = input;
+  char * dst = input;
+
+  while ('\0' != *src)
+  {
+    *dst = *src;
+
+    if (' ' == *dst)
+    {
+      *dst = '_';
+    }
+
+    dst++;
+    src++;
+  }
+
+  *dst = '\0';
+  return input;
+}
+
+char * remove_quotes(char * input)
+{
+  if (NULL == input)
+  {
+    return NULL;
+  }
+  
+  size_t len = strlen(input); 
+  char * src = input;
+  char * dst = input;
+
+  while ('\0' != *src)
+  {
+    *dst = *src;
+
+    if ('"' != *dst)
+    {
+      dst++;
+    }
+
+    src++;
+  }
+
+  *dst = '\0';
+  return input;
+}
+
+char * parse_disambiguation(char * input)
+{
+  char * page_to_request = NULL;
+
   cJSON * resp = cJSON_Parse(input); 
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
@@ -19,8 +76,27 @@ void parse_disambiguation(char * input)
   {
     cJSON * link = cJSON_GetArrayItem(links, i);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-    printf("%s\n",cJSON_Print(text)); 
+    printf("%d: %s\n", i, cJSON_Print(text)); 
   }
+
+   
+  int choice = 0;
+  printf("Enter the number for the intended article: ");
+  scanf("%d", &choice); 
+  printf("Getting %d\n",choice); 
+  
+  if (choice >= 0 && (choice < size))
+  {
+    cJSON * link = cJSON_GetArrayItem(links, choice);
+    cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+    page_to_request = cJSON_Print(text); 
+  }
+  else
+  {
+    printf("Invalid choice.\n"); 
+  }
+
+  return page_to_request;
 }
 
 
@@ -34,7 +110,7 @@ char * parse_content_from_json(char * input)
   cJSON * extract = NULL;  
   cJSON * page = cJSON_GetArrayItem(pages, 0);
   extract = cJSON_GetObjectItemCaseSensitive(page, "extract"); 
-  return cJSON_Print(extract);
+  return remove_html_metadata(cJSON_Print(extract));
 }
 
 
@@ -46,6 +122,11 @@ char * parse_content_from_json(char * input)
  */
 char * remove_html_metadata(char * input)
 {
+  if (NULL == input)
+  {
+    return NULL;
+  }
+
   char * output = calloc(strlen(input), sizeof(char));
 
   if (NULL == output)

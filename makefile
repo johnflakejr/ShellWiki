@@ -1,7 +1,7 @@
 all: shellwiki
 CFLAGS = -g
 LIBS = -lcjson -lcurl
-OBJ = main.o parser.o
+OBJ = main.o parser.o util.o
 OUTPUT = shellwiki
 SOURCEDIR = ./src
 BUILDDIR = ./build
@@ -15,6 +15,9 @@ main.o: $(SOURCEDIR)/main.c
 
 parser.o: $(SOURCEDIR)/parser.c
 	gcc $(CFLAGS) -c $(SOURCEDIR)/parser.c $(LIBS)
+
+util.o: $(SOURCEDIR)/util.c
+	gcc $(CFLAGS) -c $(SOURCEDIR)/util.c $(LIBS)
 
 clean: 
 	rm -rf $(OBJ) $(BUILDDIR)/$(OUTPUT)
