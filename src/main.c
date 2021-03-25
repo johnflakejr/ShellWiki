@@ -1,12 +1,15 @@
 #include <stdio.h> 
 #include <curl/curl.h>
+#include <cjson/cJSON.h>
 #include <stdlib.h> 
 #include <string.h> 
-#include "parser.h"
+#include "../include/parser.h"
 
 #define PAGE_SIZE 4096 
 #define REQ_SIZE 256
 #define DEBUG 1
+
+//TODO: use wikipedia API instead of parsing html
 
 /*
   Prints how to use this simple program
@@ -64,14 +67,21 @@ static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 
   //Get the response without HTML data. 
-  char * resp = remove_html_metadata(ptr); 
+  //char * resp = remove_html_metadata(ptr); 
 
+  char * content = parse_content_from_json(ptr); 
+  
+  if (NULL != content)
+  {
+    printf("%s\n",content); 
+  }
+
+  
 #ifdef DEBUG
   //printf("GOT %lu 'size'. \n\n\n", size); 
   //printf("GOT %lu nmemb. \n\n\n", nmemb); 
-  printf("%s\n", resp); 
   //printf("GOT USER DATA: %s\n", userdata); 
-  free(resp); 
+  //free(resp); 
 #endif
 
   return (size * nmemb);  
@@ -90,6 +100,7 @@ int main(int argc, char ** argv)
   }
  
   CURL *curl;
+
   CURLcode res;
  
   curl = curl_easy_init();
@@ -106,15 +117,24 @@ int main(int argc, char ** argv)
     return 1; 
   }
 
-  //TODO: Account for language. 
-  char * base_wiki_url = "https://en.wikipedia.org/wiki/"; 
+  char * base_wiki_url = "https://en.wikipedia.org/w/api.php";
+
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
 
+  char * com = "?action=query&prop=extracts&exsentences=10&exlimit=1&titles=";
+  strncat(request_url, com, strlen(com)); 
+
+  /*
+    Combine arguments to one page (e.g: combine apple iphone to apple_iphone
+  */
   char * wiki_page = combine_args_to_page(argc, argv);
   strncat(request_url, wiki_page, strlen(wiki_page)); 
 
+  char * flags = "&explaintext=1&formatversion=2&format=json"; 
+  strncat(request_url, flags, strlen(flags)); 
+
 #ifdef DEBUG 
-  printf("Request URL: %s\n",request_url); 
+  //printf("Request URL: %s\n",request_url); 
 #endif
     
   curl_easy_setopt(curl, CURLOPT_URL, request_url);
