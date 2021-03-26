@@ -50,24 +50,11 @@ static size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata
 
     if (NULL != content)
     {
-
-      size_t len = strlen(content);
-    
-      if (len < 10)
-        printf("Not much here...\n"); 
-      /*
-      {
-        printf("Getting redirects...\n"); 
-        ((reqdata *) userdata)->res_type = GET_REDIRECTS;
-        return 0; 
-      }
-      */
-
       if (NULL != strstr(content, "may refer to"))
       {
         ((reqdata *) userdata)->res_type = GET_DISAMBIGUATION;
-        printf("There are multiple pages.  Try one of these...\n"); 
-        return 0; 
+        printf("There are multiple pages.  Try one of these:\n\n"); 
+        return 0;
       }
       else
       {
@@ -100,17 +87,11 @@ static size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata
  */
 void make_request(char * wiki_page, reqdata * request_data)
 {
+  char * request_url = calloc(REQ_SIZE, sizeof(char)); 
   CURL * curl;
   curl = curl_easy_init();
 
-  if (NULL == curl) 
-  {
-    return;
-  }
-
-  char * request_url = calloc(REQ_SIZE, sizeof(char)); 
-
-  if (NULL == request_url)
+  if ((NULL == curl) || (NULL == request_url)) 
   {
     return;
   }
@@ -119,23 +100,23 @@ void make_request(char * wiki_page, reqdata * request_data)
   char * com;
   char * flags = "&formatversion=2&format=json"; 
 
-
-  //Extract data from this page. 
+  //Content query command
   if (GET_CONTENT == request_data->req_type)
   {
     com = "?action=query&prop=extracts&exsentences=10&exlimit=5&titles=";
   }
 
-  //Find out if this page has other information
+  //Search query command
   else if (GET_SEARCH == request_data->req_type)
   {
     com = "?action=query&list=search&srsearch=";
   }
 
-  //Disambiguation
+  //Disambiguation query command
   else
   {
-    com = "?action=query&prop=links&pllimit=20&titles=";
+    printf("Disambiguation...\n"); 
+    com = "?action=query&prop=links&pllimit=10&titles=";
   }
 
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
@@ -149,15 +130,21 @@ void make_request(char * wiki_page, reqdata * request_data)
 
   //printf("Request URL: %s\n",request_url); 
   curl_easy_setopt(curl, CURLOPT_URL, request_url);
+
+  //Follow redirects
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+  //Data to pass to the handler function
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) request_data);
 
 #ifdef DEBUG
-  printf("Request URL: %s\n",request_url); 
+  //printf("Request URL: %s\n",request_url); 
 #endif
 
+  //Function for handling response
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
 
+  //Perform the actual request
   CURLcode res = curl_easy_perform(curl);
 
   if (CURLE_OK != res)
@@ -184,30 +171,31 @@ int main(int argc, char ** argv)
   //Get the desired page from the user: 
   char * wiki_page = combine_args_to_page(argc, argv);
 
-  //First, try making a request for the given page.
+  //First, search for the page
   reqdata request;
   request.next_choice = NULL;
   request.req_type = GET_SEARCH;
 
-
-  printf("Making initial page search...\n"); 
-
   make_request(wiki_page, &request); 
-
-  //printf("Dealing with response type: %d...\n", request.res_type); 
-  //If that didn't work because of disambiguation, handle that: 
-  if (GET_DISAMBIGUATION == request.res_type)
+  
+  while (RESP_OK != request.res_type)
   {
-    request.req_type = GET_DISAMBIGUATION;
-    make_request(wiki_page, &request); 
-  }
+    //If that didn't work because of disambiguation, handle that: 
+    if (GET_DISAMBIGUATION == request.res_type)
+    {
+      request.req_type = GET_DISAMBIGUATION;
+      make_request(wiki_page, &request); 
+    }
 
-  if (NULL != request.next_choice)
-  {
-    request.req_type = GET_CONTENT;
-    make_request(capitalize_arg(request.next_choice), &request); 
+    //If there
+    if (NULL != request.next_choice)
+    {
+      request.req_type = GET_CONTENT;
+      make_request(capitalize_arg(request.next_choice), &request); 
+    }
   }
   
+  free(wiki_page); 
   return 0;
 }
 

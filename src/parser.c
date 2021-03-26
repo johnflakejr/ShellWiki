@@ -3,7 +3,11 @@
 #include <stdbool.h> 
 #include <cjson/cJSON.h>
 
-
+/**
+ * @brief removes the two character '\' 'n' sequence from input
+ * @param input string to remove "\n" from
+ * @return char* pointer to the altered string
+ */
 static char * remove_newlines(char * input)
 {
   if (NULL == input)
@@ -11,7 +15,6 @@ static char * remove_newlines(char * input)
     return NULL;
   }
   
-  size_t len = strlen(input); 
   char * src = input;
   char * dst = input;
 
@@ -29,9 +32,15 @@ static char * remove_newlines(char * input)
   }
 
   *dst = '\0';
+
   return input;
 }
 
+/**
+ * @brief replace all spaces with underscores in the input string
+ * @param input the string to alter
+ * @return char* pointer to the altered string
+ */
 char * replace_spaces(char * input)
 {
   if (NULL == input)
@@ -39,7 +48,6 @@ char * replace_spaces(char * input)
     return NULL;
   }
   
-  size_t len = strlen(input); 
   char * src = input;
   char * dst = input;
 
@@ -57,9 +65,16 @@ char * replace_spaces(char * input)
   }
 
   *dst = '\0';
+
   return input;
 }
 
+/**
+ * @brief remove the specified character from the input string
+ * @param input the string to alter
+ * @param c the character to remove
+ * @return the altered string
+ */
 char * remove_char(char * input, char c)
 {
   if (NULL == input)
@@ -67,7 +82,6 @@ char * remove_char(char * input, char c)
     return NULL;
   }
   
-  size_t len = strlen(input); 
   char * src = input;
   char * dst = input;
 
@@ -90,7 +104,6 @@ char * remove_char(char * input, char c)
 char * parse_disambiguation(char * input)
 {
   char * page_to_request = NULL;
-
   cJSON * resp = cJSON_Parse(input); 
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
@@ -141,7 +154,7 @@ char * parse_search(char * input)
 
   int size = cJSON_GetArraySize(pages); 
 
-  printf("Got %d results\n", size); 
+  printf("%d results\n", size); 
 
   for(int i = 0; i < size; i++)
   {
@@ -171,9 +184,12 @@ char * parse_search(char * input)
   return page_to_request;
 }
 
+/**
+ * @brief get the text extract from the JSON reply
+ */
 char * parse_content_from_json(char * input)
 {
-  printf("Raw response: %s\n",input); 
+  //printf("Raw response: %s\n",input); 
   cJSON * resp = cJSON_Parse(input); 
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
