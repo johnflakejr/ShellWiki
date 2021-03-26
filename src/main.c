@@ -10,60 +10,97 @@
 #define PAGE_SIZE 4096 
 #define REQ_SIZE 256
 #define DEBUG 1
-
+#define GET_REDIRECTS 0x00
 #define GET_CONTENT 0x01
 #define GET_DISAMBIGUATION 0x02
+#define GET_SEARCH 0x04
+#define RESP_OK 0xFF
 
 typedef struct reqdata {
 
   //Lets the underlying function know what API request to make
   int req_type;
 
+  //Lets the user know what to do next
+  int res_type;
+
   //Response makes it clear that this is a disambiguation
-  bool is_disam;
-  char * disam_choice; 
+  char * next_choice; 
 
 } reqdata; 
+
 
 /**
  * @brief Handle data from the web server.
  * @param ptr string of raw data received
+ * @param size number of pages to parse
+ * @param size of the page
+ * @param userdata pointer to data provided by the user
  */
-static size_t handle_resp(char *ptr, size_t size, size_t nmemb, void * userdata)
+static size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
 {
+  if ((NULL == ptr) || (NULL == userdata))
+  {
+    return 0; 
+  }
 
   if (GET_CONTENT == ((reqdata *) userdata)->req_type)
   {
     char * content = parse_content_from_json(ptr); 
-    
+
     if (NULL != content)
     {
 
+      size_t len = strlen(content);
+    
+      if (len < 10)
+        printf("Not much here...\n"); 
+      /*
+      {
+        printf("Getting redirects...\n"); 
+        ((reqdata *) userdata)->res_type = GET_REDIRECTS;
+        return 0; 
+      }
+      */
+
       if (NULL != strstr(content, "may refer to"))
       {
-        ((reqdata *) userdata)->is_disam = true;
+        ((reqdata *) userdata)->res_type = GET_DISAMBIGUATION;
         printf("There are multiple pages.  Try one of these...\n"); 
+        return 0; 
       }
       else
       {
-        ((reqdata *) userdata)->is_disam = false;
+        ((reqdata *) userdata)->res_type = RESP_OK;
         printf("%s\n",content); 
       }
     }
   }
+  else if (GET_SEARCH == ((reqdata *) userdata)->req_type)
+  {
+    char * req = parse_search(ptr); 
+    ((reqdata *) userdata)->next_choice = req;
+  }
+
+  //Disambiguation
   else
   {
     char * req = parse_disambiguation(ptr); 
-    ((reqdata *) userdata)->disam_choice = req;
+    ((reqdata *) userdata)->next_choice = req;
   }
 
   return (size * nmemb);  
 }
 
+
+/**
+ * @brief function to actually request the given page
+ * @param wiki_page wiki page string to request
+ * @param request_data data provided by the requester to this function
+ */
 void make_request(char * wiki_page, reqdata * request_data)
 {
-  CURL *curl;
-  CURLcode res;
+  CURL * curl;
   curl = curl_easy_init();
 
   if (NULL == curl) 
@@ -82,23 +119,30 @@ void make_request(char * wiki_page, reqdata * request_data)
   char * com;
   char * flags = "&formatversion=2&format=json"; 
 
+
+  //Extract data from this page. 
   if (GET_CONTENT == request_data->req_type)
   {
     com = "?action=query&prop=extracts&exsentences=10&exlimit=5&titles=";
   }
 
+  //Find out if this page has other information
+  else if (GET_SEARCH == request_data->req_type)
+  {
+    com = "?action=query&list=search&srsearch=";
+  }
+
   //Disambiguation
   else
   {
-    com = "?action=query&prop=links&pllimit=15&titles=";
+    com = "?action=query&prop=links&pllimit=20&titles=";
   }
 
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
   strncat(request_url, com, strlen(com)); 
 
   //Strip quotes from wiki_page: 
-  
-  wiki_page = remove_quotes(wiki_page); 
+  wiki_page = remove_char(wiki_page, '"'); 
   wiki_page = replace_spaces(wiki_page); 
   strncat(request_url, wiki_page, strlen(wiki_page)); 
   strncat(request_url, flags, strlen(flags));
@@ -114,7 +158,7 @@ void make_request(char * wiki_page, reqdata * request_data)
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
 
-  res = curl_easy_perform(curl);
+  CURLcode res = curl_easy_perform(curl);
 
   if (CURLE_OK != res)
   {
@@ -137,30 +181,35 @@ int main(int argc, char ** argv)
     return 1; 
   }
 
+  //Get the desired page from the user: 
   char * wiki_page = combine_args_to_page(argc, argv);
 
   //First, try making a request for the given page.
   reqdata request;
-  request.is_disam = false;
-  request.disam_choice = NULL;
-  request.req_type = GET_CONTENT; 
+  request.next_choice = NULL;
+  request.req_type = GET_SEARCH;
+
+
+  printf("Making initial page search...\n"); 
 
   make_request(wiki_page, &request); 
 
+  //printf("Dealing with response type: %d...\n", request.res_type); 
   //If that didn't work because of disambiguation, handle that: 
-  if (request.is_disam)
+  if (GET_DISAMBIGUATION == request.res_type)
   {
     request.req_type = GET_DISAMBIGUATION;
     make_request(wiki_page, &request); 
   }
 
-  if (NULL != request.disam_choice)
+  if (NULL != request.next_choice)
   {
     request.req_type = GET_CONTENT;
-    make_request(request.disam_choice, &request); 
+    make_request(capitalize_arg(request.next_choice), &request); 
   }
   
   return 0;
 }
 
 //End of file
+

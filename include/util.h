@@ -6,6 +6,7 @@
 
 
 void usage();
+char * capitalize_arg(char * input);
 char * combine_args_to_page(int argc, char ** argv);
 
 #endif

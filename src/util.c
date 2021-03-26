@@ -16,7 +16,7 @@ void usage()
  * @param input input string
  * @return char * pointer to the modified string
  */
-static char * capitalize_arg(char * input)
+char * capitalize_arg(char * input)
 {
   if (NULL == input)
   {
