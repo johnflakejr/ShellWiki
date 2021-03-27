@@ -1,3 +1,4 @@
 *.o
 shellwiki
 ./build/* 
+tests/shellwiki_test
