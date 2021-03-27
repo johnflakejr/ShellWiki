@@ -12,7 +12,7 @@ TESTDIR = ./tests
 
 all: shellwiki tests
 
-shellwiki: $(OBJ) 
+shellwiki: $(OBJ) $(MAINOBJ) 
 	gcc $(CFLAGS) $(MAINOBJ) $(OBJ) -o $(BUILDDIR)/$(OUTPUT) $(LIBS)
 
 tests: shellwiki $(TESTOBJ) 
