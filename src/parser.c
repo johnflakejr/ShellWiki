@@ -143,7 +143,12 @@ char * parse_disambiguation(char * input)
 
   int size = cJSON_GetArraySize(links); 
 
-  for(int i = 0; i < size; i++)
+  if (0 == size)
+  {
+    return NULL;
+  }
+
+  for (int i = 0; i < size; i++)
   {
     cJSON * link = cJSON_GetArrayItem(links, i);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
@@ -154,7 +159,6 @@ char * parse_disambiguation(char * input)
   int choice = 0;
   printf("Enter the number for the intended article: ");
   scanf("%d", &choice); 
-  printf("Getting %d\n",choice); 
   
   if (choice >= 0 && (choice < size))
   {
@@ -170,7 +174,7 @@ char * parse_disambiguation(char * input)
   return page_to_request;
 }
 
-char * parse_search(char * input)
+char * parse_search(char * input, bool is_lucky)
 {
   char * page_to_request = NULL;
 
@@ -179,27 +183,20 @@ char * parse_search(char * input)
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "search"); 
   cJSON * page = NULL;
 
-  printf("Getting search results...\n"); 
-
   int size = cJSON_GetArraySize(pages); 
 
-  printf("%d results\n", size); 
+  printf("%d results.\n", size); 
 
-  for(int i = 0; i < size; i++)
+  if (0 == size)
   {
-    cJSON * link = cJSON_GetArrayItem(pages, i);
-    cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-    printf("%d: %s\n", i, cJSON_Print(text)); 
+    return NULL;
   }
 
-
+  
 
   int choice = 0;
-  printf("Enter the number for the intended article: ");
-  scanf("%d", &choice); 
-  printf("Getting %d\n",choice); 
-  
-  if (choice >= 0 && (choice < size))
+
+  if (is_lucky)
   {
     cJSON * link = cJSON_GetArrayItem(pages, choice);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
@@ -207,7 +204,28 @@ char * parse_search(char * input)
   }
   else
   {
-    printf("Invalid choice.\n"); 
+
+    for (int i = 0; i < size; i++)
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, i);
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      printf("%d: %s\n", i, cJSON_Print(text)); 
+    }
+    printf("Enter the number for the intended article: ");
+
+    scanf("%d", &choice); 
+    printf("Getting %d\n",choice); 
+    
+    if ((choice >= 0) && (choice < size))
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, choice);
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      page_to_request = cJSON_Print(text); 
+    }
+    else
+    {
+      printf("Invalid choice.\n"); 
+    }
   }
 
   return page_to_request;

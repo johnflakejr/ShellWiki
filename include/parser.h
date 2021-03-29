@@ -3,8 +3,9 @@
 
 #include <stdlib.h> 
 #include <string.h> 
+#include <stdbool.h>
 
-char * parse_search(char * input);
+char * parse_search(char * input, bool is_lucky);
 char * parse_disambiguation(char * input);
 char * parse_content_from_json(char * input);
 char * remove_html_metadata(char * input);

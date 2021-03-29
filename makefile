@@ -2,7 +2,7 @@ all: shellwiki
 CFLAGS = -g
 LIBS = -lcjson -lcurl -lcunit
 MAINOBJ = main.o 
-OBJ= parser.o util.o
+OBJ= parser.o util.o communication.o
 TESTOBJ = test_main.o
 OUTPUT = shellwiki
 TESTOUTPUT = shellwiki_test
@@ -29,6 +29,9 @@ parser.o: $(SOURCEDIR)/parser.c
 
 util.o: $(SOURCEDIR)/util.c
 	gcc $(CFLAGS) -c $(SOURCEDIR)/util.c $(LIBS)
+
+communication.o: $(SOURCEDIR)/communication.c
+	gcc $(CFLAGS) -c $(SOURCEDIR)/communication.c $(LIBS)
 
 clean: 
 	rm -rf *.o $(BUILDDIR)/$(OUTPUT)
