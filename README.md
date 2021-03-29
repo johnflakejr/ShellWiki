@@ -1,6 +1,10 @@
 Simple shell utility for reading wikipedia articles.
 
-Requires libcurl and cJSON for operation.
+Requires:
+
+- libcurl
+- CJSON: https://github.com/DaveGamble/cJSON
+- CUnit
 
 
 Working:
