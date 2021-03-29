@@ -8,7 +8,8 @@
 void usage()
 {
   printf("Usage: \n\n"); 
-  printf("./shellwiki [thing] \n"); 
+  printf("./shellwiki [-l] [article] \n\n\n"); 
+  printf("-l: \"I'm feeling lucky\" - get first result.\n");
 }
 
 /**

@@ -22,6 +22,9 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
 
   if (GET_CONTENT == ((reqdata *) userdata)->req_type)
   {
+#ifdef DEBUG
+    printf("Getting content...\n");
+#endif
     char * content = parse_content_from_json(ptr); 
 
     if (NULL != content)
@@ -34,9 +37,16 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
       }
       else
       {
+        //This is where the actual information is printed to the user.
         ((reqdata *) userdata)->res_type = RESP_OK;
         printf("%s\n",content); 
       }
+    }
+    else
+    {
+      //This is where the actual information is printed to the user.
+      ((reqdata *) userdata)->res_type = RESP_OK;
+      printf("This article could not be displayed.\n");
     }
   }
   else if (GET_SEARCH == ((reqdata *) userdata)->req_type)
