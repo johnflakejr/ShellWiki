@@ -12,7 +12,6 @@
 
 int main(int argc, char ** argv)
 {
-
   /*
     The user needs to supply a search term
   */
@@ -22,32 +21,14 @@ int main(int argc, char ** argv)
     return 1; 
   }
   
-  bool lucky = false;
   int opt;
 
-  while (-1 != (opt = getopt(argc, argv, "l")))
+  options my_options;
+  my_options.lucky = false;
+  my_options.verbose = 0;
+
+  if (1 == get_options(argc, argv, &my_options))
   {
-
-    switch (opt)
-    {
-      case 'l':
-        lucky = true;
-      break;
-
-      default: 
-        usage();
-        return 1;
-      break;
-    }
-  }
-
-  //Get the desired page from the user: 
-  //optind is the index given after regular args
-  printf("Optind: %d\n",optind);
-
-  if (optind >= argc)
-  {
-    usage();
     return 1;
   }
 
@@ -59,7 +40,7 @@ int main(int argc, char ** argv)
   request.next_choice = NULL;
   request.req_type = GET_SEARCH;
   request.res_type = RESP_OK;
-  request.is_lucky = lucky;
+  request.is_lucky = my_options.lucky;
 
   make_request(wiki_page, &request); 
   
