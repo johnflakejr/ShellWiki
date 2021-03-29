@@ -101,14 +101,43 @@ char * remove_char(char * input, char c)
   return input;
 }
 
+
+/**
+ *  @brief Given a JSON response from the server, parse it.
+ *
+ */
+
 char * parse_disambiguation(char * input)
 {
   char * page_to_request = NULL;
-  cJSON * resp = cJSON_Parse(input); 
-  cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
-  cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
   cJSON * links = NULL;  
+
+  cJSON * resp = cJSON_Parse(input); 
+  if (NULL == resp)
+  {
+    return NULL;
+  }
+
+  cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
+  if (NULL == query)
+  {
+    return NULL;
+  }
+
+  cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
+  if (NULL == pages)
+  {
+    return NULL;
+  }
+
+
   cJSON * page = cJSON_GetArrayItem(pages, 0);
+  if (NULL == page)
+  {
+    return NULL;
+  }
+
+
 
   links = cJSON_GetObjectItemCaseSensitive(page, "links"); 
 
@@ -189,7 +218,6 @@ char * parse_search(char * input)
  */
 char * parse_content_from_json(char * input)
 {
-  //printf("Raw response: %s\n",input); 
   cJSON * resp = cJSON_Parse(input); 
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
@@ -198,7 +226,6 @@ char * parse_content_from_json(char * input)
   extract = cJSON_GetObjectItemCaseSensitive(page, "extract"); 
   char * res = remove_html_metadata(cJSON_Print(extract));
 
-  //res = remove_char(res, '\n');
   res = remove_newlines(res);
   res = remove_char(res, '\\');
   return res;
