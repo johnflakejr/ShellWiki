@@ -12,10 +12,8 @@ Working:
   - Handling disambiguation pages
 
 
-TODO: 
-  - Handle articles that do NOT redirect to disambiguation page, but have
-    multiple interpretations
+TODO:
 
-  - Implement testing (cunit?)
+  - Implement more testing
 
   - Refactor and improve codebase
