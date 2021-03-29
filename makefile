@@ -31,4 +31,4 @@ util.o: $(SOURCEDIR)/util.c
 	gcc $(CFLAGS) -c $(SOURCEDIR)/util.c $(LIBS)
 
 clean: 
-	rm -rf $(OBJ) $(BUILDDIR)/$(OUTPUT)
+	rm -rf *.o $(BUILDDIR)/$(OUTPUT)
