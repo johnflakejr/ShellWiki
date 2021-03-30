@@ -122,12 +122,14 @@ char * parse_disambiguation(char * input)
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   if (NULL == query)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
   if (NULL == pages)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -135,6 +137,7 @@ char * parse_disambiguation(char * input)
   cJSON * page = cJSON_GetArrayItem(pages, 0);
   if (NULL == page)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -146,6 +149,7 @@ char * parse_disambiguation(char * input)
 
   if (0 == size)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -172,6 +176,7 @@ char * parse_disambiguation(char * input)
     printf("Invalid choice.\n"); 
   }
 
+  cJSON_Delete(resp);
   return page_to_request;
 }
 
@@ -190,6 +195,7 @@ char * parse_search(char * input, reqdata userdata)
 
   if (0 == size)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -232,6 +238,7 @@ char * parse_search(char * input, reqdata userdata)
     }
   }
 
+  cJSON_Delete(resp);
   return page_to_request;
 }
 
@@ -250,6 +257,7 @@ char * parse_content_from_json(char * input)
 
   res = remove_newlines(res);
   res = remove_char(res, '\\');
+  cJSON_Delete(resp);
   return res;
 }
 
