@@ -1,6 +1,7 @@
 #include "../include/util.h" 
 #include <ctype.h> 
 #include <stdio.h>
+#include <unistd.h> 
 
 /*
   Prints how to use this simple program
@@ -8,7 +9,45 @@
 void usage()
 {
   printf("Usage: \n\n"); 
-  printf("./shellwiki [thing] \n"); 
+  printf("./shellwiki [-l] [article] \n\n\n"); 
+  printf("-l: \"I'm feeling lucky\" - get first result.\n");
+  printf("-v: verbose\n\n");
+}
+
+int get_options(int argc, char ** argv, options * my_options)
+{
+  int opt = -1;
+
+  while (-1 != (opt = getopt(argc, argv, "lv")))
+  {
+    switch (opt)
+    {
+      case 'l':
+        my_options->lucky = true;
+      break;
+
+      case 'v':
+        my_options->verbose = 1;
+      break;
+
+      default: 
+        usage();
+        return 1;
+      break;
+    }
+  }
+
+  //Get the desired page from the user: 
+  //optind is the index given after regular args
+  //printf("Optind: %d\n",optind);
+
+  if (optind >= argc)
+  {
+    usage();
+    return 1;
+  }
+
+  return 0;
 }
 
 /**

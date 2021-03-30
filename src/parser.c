@@ -2,6 +2,7 @@
 #include <stdio.h> 
 #include <stdbool.h> 
 #include <cjson/cJSON.h>
+#include "../include/communication.h"
 
 /**
  * @brief removes the two character '\' 'n' sequence from input
@@ -121,12 +122,14 @@ char * parse_disambiguation(char * input)
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
   if (NULL == query)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "pages"); 
   if (NULL == pages)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -134,6 +137,7 @@ char * parse_disambiguation(char * input)
   cJSON * page = cJSON_GetArrayItem(pages, 0);
   if (NULL == page)
   {
+    cJSON_Delete(resp);
     return NULL;
   }
 
@@ -143,7 +147,13 @@ char * parse_disambiguation(char * input)
 
   int size = cJSON_GetArraySize(links); 
 
-  for(int i = 0; i < size; i++)
+  if (0 == size)
+  {
+    cJSON_Delete(resp);
+    return NULL;
+  }
+
+  for (int i = 0; i < size; i++)
   {
     cJSON * link = cJSON_GetArrayItem(links, i);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
@@ -154,7 +164,6 @@ char * parse_disambiguation(char * input)
   int choice = 0;
   printf("Enter the number for the intended article: ");
   scanf("%d", &choice); 
-  printf("Getting %d\n",choice); 
   
   if (choice >= 0 && (choice < size))
   {
@@ -167,10 +176,11 @@ char * parse_disambiguation(char * input)
     printf("Invalid choice.\n"); 
   }
 
+  cJSON_Delete(resp);
   return page_to_request;
 }
 
-char * parse_search(char * input)
+char * parse_search(char * input, reqdata userdata)
 {
   char * page_to_request = NULL;
 
@@ -179,37 +189,56 @@ char * parse_search(char * input)
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "search"); 
   cJSON * page = NULL;
 
-  printf("Getting search results...\n"); 
-
   int size = cJSON_GetArraySize(pages); 
 
-  printf("%d results\n", size); 
+  printf("%d results.\n", size); 
 
-  for(int i = 0; i < size; i++)
+  if (0 == size)
   {
-    cJSON * link = cJSON_GetArrayItem(pages, i);
-    cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-    printf("%d: %s\n", i, cJSON_Print(text)); 
+    cJSON_Delete(resp);
+    return NULL;
   }
 
 
-
   int choice = 0;
-  printf("Enter the number for the intended article: ");
-  scanf("%d", &choice); 
-  printf("Getting %d\n",choice); 
-  
-  if (choice >= 0 && (choice < size))
+
+  if (userdata.is_lucky)
   {
     cJSON * link = cJSON_GetArrayItem(pages, choice);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
     page_to_request = cJSON_Print(text); 
+    if (userdata.verbose)
+    {
+      printf("\"I'm feeling lucky\" option returned %s.\n", page_to_request);
+    }
   }
   else
   {
-    printf("Invalid choice.\n"); 
+
+    for (int i = 0; i < size; i++)
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, i);
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      printf("%d: %s\n", i, cJSON_Print(text)); 
+    }
+    printf("Enter the number for the intended article: ");
+
+    scanf("%d", &choice); 
+    printf("Getting %d\n",choice); 
+    
+    if ((choice >= 0) && (choice < size))
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, choice);
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      page_to_request = cJSON_Print(text); 
+    }
+    else
+    {
+      printf("Invalid choice.\n"); 
+    }
   }
 
+  cJSON_Delete(resp);
   return page_to_request;
 }
 
@@ -228,6 +257,7 @@ char * parse_content_from_json(char * input)
 
   res = remove_newlines(res);
   res = remove_char(res, '\\');
+  cJSON_Delete(resp);
   return res;
 }
 
