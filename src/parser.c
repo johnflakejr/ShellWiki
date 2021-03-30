@@ -2,6 +2,7 @@
 #include <stdio.h> 
 #include <stdbool.h> 
 #include <cjson/cJSON.h>
+#include "../include/communication.h"
 
 /**
  * @brief removes the two character '\' 'n' sequence from input
@@ -174,7 +175,7 @@ char * parse_disambiguation(char * input)
   return page_to_request;
 }
 
-char * parse_search(char * input, bool is_lucky)
+char * parse_search(char * input, reqdata userdata)
 {
   char * page_to_request = NULL;
 
@@ -192,15 +193,18 @@ char * parse_search(char * input, bool is_lucky)
     return NULL;
   }
 
-  
 
   int choice = 0;
 
-  if (is_lucky)
+  if (userdata.is_lucky)
   {
     cJSON * link = cJSON_GetArrayItem(pages, choice);
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
     page_to_request = cJSON_Print(text); 
+    if (userdata.verbose)
+    {
+      printf("\"I'm feeling lucky\" option returned %s.\n", page_to_request);
+    }
   }
   else
   {

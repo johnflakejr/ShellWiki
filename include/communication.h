@@ -27,6 +27,8 @@ typedef struct reqdata {
   char * next_choice; 
 
   bool is_lucky;
+  
+  int verbose;
 
 } reqdata; 
 

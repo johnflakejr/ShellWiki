@@ -11,18 +11,23 @@ void usage()
   printf("Usage: \n\n"); 
   printf("./shellwiki [-l] [article] \n\n\n"); 
   printf("-l: \"I'm feeling lucky\" - get first result.\n");
+  printf("-v: verbose\n\n");
 }
 
 int get_options(int argc, char ** argv, options * my_options)
 {
   int opt = -1;
 
-  while (-1 != (opt = getopt(argc, argv, "l")))
+  while (-1 != (opt = getopt(argc, argv, "lv")))
   {
     switch (opt)
     {
       case 'l':
         my_options->lucky = true;
+      break;
+
+      case 'v':
+        my_options->verbose = 1;
       break;
 
       default: 
@@ -34,7 +39,7 @@ int get_options(int argc, char ** argv, options * my_options)
 
   //Get the desired page from the user: 
   //optind is the index given after regular args
-  printf("Optind: %d\n",optind);
+  //printf("Optind: %d\n",optind);
 
   if (optind >= argc)
   {

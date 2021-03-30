@@ -20,6 +20,7 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
     return 0; 
   }
 
+
   if (GET_CONTENT == ((reqdata *) userdata)->req_type)
   {
 #ifdef DEBUG
@@ -49,9 +50,10 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
       printf("This article could not be displayed.\n");
     }
   }
+
   else if (GET_SEARCH == ((reqdata *) userdata)->req_type)
   {
-    char * req = parse_search(ptr, ((reqdata *) userdata)->is_lucky); 
+    char * req = parse_search(ptr, *((reqdata *) userdata));
     ((reqdata *) userdata)->next_choice = req;
     ((reqdata *) userdata)->res_type = GET_CONTENT;
   }
@@ -75,14 +77,15 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
 void make_request(char * wiki_page, reqdata * request_data)
 {
   char * request_url = calloc(REQ_SIZE, sizeof(char)); 
-  CURL * curl;
-  curl = curl_easy_init();
+  CURL * curl = curl_easy_init();
 
   if ((NULL == curl) || (NULL == request_url)) 
   {
     return;
   }
 
+
+  //TODO: Add options for some of these flags, perhaps.
   char * base_wiki_url = "https://en.wikipedia.org/w/api.php";
   char * com;
   char * flags = "&formatversion=2&format=json"; 
@@ -109,9 +112,10 @@ void make_request(char * wiki_page, reqdata * request_data)
   strncpy(request_url, base_wiki_url, strlen(base_wiki_url)); 
   strncat(request_url, com, strlen(com)); 
 
-  //Strip quotes from wiki_page: 
+  //Strip quotes from search term and replace spaces with "_"
   wiki_page = remove_char(wiki_page, '"'); 
   wiki_page = replace_spaces(wiki_page); 
+
   strncat(request_url, wiki_page, REQ_SIZE - strlen(request_url)); 
   strncat(request_url, flags, REQ_SIZE - strlen(request_url));
 
@@ -123,9 +127,10 @@ void make_request(char * wiki_page, reqdata * request_data)
   //Data to pass to the handler function
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) request_data);
 
-#ifdef DEBUG
-  printf("Request URL: %s\n",request_url); 
-#endif
+  if (request_data->verbose)
+  {
+    printf("Requesting API URL: %s\n",request_url); 
+  }
 
   //Function for handling response
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_resp);
@@ -142,4 +147,5 @@ void make_request(char * wiki_page, reqdata * request_data)
   free(request_url); 
 }
 
+//End of file
 

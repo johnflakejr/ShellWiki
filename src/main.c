@@ -41,6 +41,12 @@ int main(int argc, char ** argv)
   request.req_type = GET_SEARCH;
   request.res_type = RESP_OK;
   request.is_lucky = my_options.lucky;
+  request.verbose = my_options.verbose;
+
+  if (my_options.verbose)
+  {
+    printf("Searching for the term \"%s\".\n", wiki_page);
+  }
 
   make_request(wiki_page, &request); 
   
