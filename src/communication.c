@@ -15,17 +15,14 @@
  */
 size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
 {
+
   if ((NULL == ptr) || (NULL == userdata))
   {
     return 0; 
   }
 
-
   if (GET_CONTENT == ((reqdata *) userdata)->req_type)
   {
-#ifdef DEBUG
-    printf("Getting content...\n");
-#endif
     char * content = parse_content_from_json(ptr); 
 
     if (NULL != content)
@@ -97,9 +94,10 @@ void make_request(char * wiki_page, reqdata * request_data)
   }
 
   //Search query command
+  //50 total results.  User will then parse through them page by page
   else if (GET_SEARCH == request_data->req_type)
   {
-    com = "?action=query&list=search&srsearch=";
+    com = "?action=query&list=search&srlimit=20&srsearch=";
   }
 
   //Disambiguation query command

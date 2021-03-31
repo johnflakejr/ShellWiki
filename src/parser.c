@@ -105,7 +105,6 @@ char * remove_char(char * input, char c)
 
 /**
  *  @brief Given a JSON response from the server, parse it.
- *
  */
 
 char * parse_disambiguation(char * input)
@@ -180,17 +179,108 @@ char * parse_disambiguation(char * input)
   return page_to_request;
 }
 
-char * parse_search(char * input, reqdata userdata)
+
+/**
+ * @brief Lets the user choose a page from a cJSON array of pages
+ * 
+ */
+char * get_choice_from_list (cJSON * pages)
+{
+  bool   choice_made = false;
+  int    page = 0;
+  char   choice = 0;
+  int    int_choice = 0;
+  char * str_choice = NULL;
+  int    size = cJSON_GetArraySize(pages); 
+
+  while (!choice_made)
+  {
+
+    for (int i = 0; i < 5; i++)
+    {
+      if ((i + (page * 5)) < size)
+      {
+        cJSON * link = cJSON_GetArrayItem(pages, i + (page * 5));
+        cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+        printf("%d: %s\n", i, cJSON_Print(text)); 
+      }
+    }
+
+    printf("Page %d\n", page);
+    printf("Enter w for back and d for next page.\t\t\n");
+    printf("Enter the number for the intended artice: ");
+
+    scanf("%c",&choice);
+    getchar();
+
+    if ('d' == choice)
+    {
+      page++;
+
+      if ((page * 5) >= size)
+      {
+        page--;
+      }
+      continue;
+    }
+
+    if ('w' == choice)
+    {
+      page--;
+      if (page < 0)
+      {
+        page = 0;
+      }
+      continue;
+    }
+
+    int_choice = choice - '0';
+    printf("Getting %d\n", int_choice); 
+    
+    if ((int_choice >= 0) && (int_choice < 5))
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, int_choice + (page * 5));
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      str_choice = cJSON_Print(text); 
+      choice_made = true;
+    }
+    else
+    {
+      printf("Invalid choice.\n"); 
+    }
+  }
+
+  return str_choice; 
+}
+
+/**
+ *  @brief Given a JSON response from the server, parse it.
+ */
+char * parse_search (char * input, reqdata userdata)
 {
   char * page_to_request = NULL;
 
   cJSON * resp = cJSON_Parse(input); 
+  if (NULL == resp)
+  {
+    return NULL;
+  }
+
   cJSON * query = cJSON_GetObjectItemCaseSensitive(resp, "query"); 
+  if (NULL == query)
+  {
+    cJSON_Delete(resp);
+    return NULL;
+  }
+
   cJSON * pages = cJSON_GetObjectItemCaseSensitive(query, "search"); 
-  cJSON * page = NULL;
+  if (NULL == pages)
+  {
+    cJSON_Delete(resp);
+    return NULL;
+  }
 
   int size = cJSON_GetArraySize(pages); 
-
   printf("%d results.\n", size); 
 
   if (0 == size)
@@ -199,14 +289,29 @@ char * parse_search(char * input, reqdata userdata)
     return NULL;
   }
 
-
-  int choice = 0;
-
   if (userdata.is_lucky)
   {
-    cJSON * link = cJSON_GetArrayItem(pages, choice);
+    cJSON * link = cJSON_GetArrayItem(pages, 0);
+    if (NULL == link)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
     cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+    if (NULL == text)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
     page_to_request = cJSON_Print(text); 
+    if (NULL == page_to_request)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
     if (userdata.verbose)
     {
       printf("\"I'm feeling lucky\" option returned %s.\n", page_to_request);
@@ -214,28 +319,7 @@ char * parse_search(char * input, reqdata userdata)
   }
   else
   {
-
-    for (int i = 0; i < size; i++)
-    {
-      cJSON * link = cJSON_GetArrayItem(pages, i);
-      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-      printf("%d: %s\n", i, cJSON_Print(text)); 
-    }
-    printf("Enter the number for the intended article: ");
-
-    scanf("%d", &choice); 
-    printf("Getting %d\n",choice); 
-    
-    if ((choice >= 0) && (choice < size))
-    {
-      cJSON * link = cJSON_GetArrayItem(pages, choice);
-      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-      page_to_request = cJSON_Print(text); 
-    }
-    else
-    {
-      printf("Invalid choice.\n"); 
-    }
+    page_to_request = get_choice_from_list(pages);
   }
 
   cJSON_Delete(resp);
@@ -305,10 +389,6 @@ char * remove_html_metadata(char * input)
     {
       output[outindex] = input[iter]; 
       outindex++;
-    }
-    else
-    {
-      //HTML tags...
     }
   }
 

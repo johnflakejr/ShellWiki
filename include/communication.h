@@ -5,7 +5,7 @@
 #include <string.h> 
 #include <stdbool.h>
 
-#define PAGE_SIZE 4096 
+#define PAGE_SIZE 4096
 #define REQ_SIZE 256
 #define GET_REDIRECTS 0x00
 #define GET_CONTENT 0x01

@@ -45,6 +45,14 @@ int main(int argc, char ** argv)
 
   if (my_options.verbose)
   {
+    if(my_options.lucky)
+    {
+      printf("Lucky mode is ON\n");
+    }
+    else
+    {
+      printf("Lucky mode is OFF\n");
+    }
     printf("Searching for the term \"%s\".\n", wiki_page);
   }
 
