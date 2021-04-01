@@ -6,8 +6,8 @@
 #include <stdbool.h>
 #include "../include/communication.h"
 
-char * parse_search(char * input, reqdata userdata);
-char * parse_disambiguation(char * input, reqdata userdata);
+char * parse_search(char * input, reqdata_t userdata);
+char * parse_disambiguation(char * input, reqdata_t userdata);
 char * parse_content_from_json(char * input);
 char * remove_html_metadata(char * input);
 char * remove_char(char * input, char c);

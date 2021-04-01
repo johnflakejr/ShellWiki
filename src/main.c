@@ -12,20 +12,13 @@
 
 int main(int argc, char ** argv)
 {
-  /*
-    The user needs to supply a search term
-  */
-  if (2 > argc)
+  if (argc < 2)
   {
     usage(); 
     return 1; 
   }
   
-  int     opt;
   options my_options;
-
-  my_options.lucky = false;
-  my_options.verbose = 0;
 
   if (1 == get_options(argc, argv, &my_options))
   {
@@ -36,8 +29,8 @@ int main(int argc, char ** argv)
   char * wiki_page;
   wiki_page = combine_args_to_page(argc - (optind - 1), argv + (optind - 1));
 
-  //First, search for the page
   reqdata request;
+
   request.next_choice = NULL;
   request.req_type    = GET_SEARCH;
   request.res_type    = RESP_OK;
@@ -48,11 +41,11 @@ int main(int argc, char ** argv)
   {
     if(my_options.lucky)
     {
-      printf("Lucky mode is ON\n");
+      printf("You are feeling lucky!\n");
     }
     else
     {
-      printf("Lucky mode is OFF\n");
+      printf("You are NOT feeling lucky!\n");
     }
 
     printf("Searching for the term \"%s\".\n", wiki_page);
@@ -62,7 +55,6 @@ int main(int argc, char ** argv)
   
   while (RESP_OK != request.res_type)
   {
-    //If that didn't work because of disambiguation, handle that: 
     if (GET_DISAMBIGUATION == request.res_type)
     {
       request.req_type = GET_DISAMBIGUATION;

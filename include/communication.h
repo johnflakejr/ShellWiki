@@ -13,7 +13,10 @@
 #define GET_SEARCH 0x04
 #define RESP_OK 0xFF
 
-
+typedef struct resp_data {
+  char * data;
+  size_t length;
+} response_data_t;
 
 typedef struct reqdata {
 
@@ -30,11 +33,11 @@ typedef struct reqdata {
   
   int verbose;
 
-} reqdata; 
+} reqdata_t; 
 
 
 size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata);
-void make_request(char * wiki_page, reqdata * request_data);
+void make_request(char * wiki_page, reqdata_t * request_data);
 
 #endif
 

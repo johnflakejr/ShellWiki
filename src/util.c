@@ -24,6 +24,10 @@ void usage()
  */
 int get_options(int argc, char ** argv, options * my_options)
 {
+
+  my_options->lucky = false;
+  my_options->verbose = 0;
+
   int opt = -1;
 
   while (-1 != (opt = getopt(argc, argv, "lv")))
