@@ -4,8 +4,6 @@
 #include <curl/curl.h>
 #define DEBUG 1
 
-
-
 /**
  * @brief Handle data from the web server.
  * @param ptr string of raw data received
@@ -58,13 +56,28 @@ size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
   //Disambiguation
   else
   {
-    char * req = parse_disambiguation(ptr); 
+    char * req = parse_disambiguation(ptr, *((reqdata *) userdata));
     ((reqdata *) userdata)->next_choice = req;
   }
 
   return (size * nmemb);  
 }
 
+
+/*
+TODO: change handle resp to only deal with getting entire content of response.
+
+      After getting the content, we can then parse all of it.
+  
+      Currently, there's an issue with incompletely parsing long messages
+
+size_t handle_resp (char *ptr, size_t size, size_t nmemb, void * userdata)
+{
+  //Userdata is a struct with a size and a character array
+
+
+}
+*/
 
 /**
  * @brief function to actually request the given page
@@ -87,6 +100,11 @@ void make_request(char * wiki_page, reqdata * request_data)
   char * com;
   char * flags = "&formatversion=2&format=json"; 
 
+  if (request_data->verbose)
+  {
+    printf("Performing request now\n");
+  }
+
   //Content query command
   if (GET_CONTENT == request_data->req_type)
   {
@@ -94,7 +112,6 @@ void make_request(char * wiki_page, reqdata * request_data)
   }
 
   //Search query command
-  //50 total results.  User will then parse through them page by page
   else if (GET_SEARCH == request_data->req_type)
   {
     com = "?action=query&list=search&srlimit=20&srsearch=";
@@ -103,7 +120,6 @@ void make_request(char * wiki_page, reqdata * request_data)
   //Disambiguation query command
   else
   {
-    printf("Disambiguation...\n"); 
     com = "?action=query&prop=links&pllimit=10&titles=";
   }
 

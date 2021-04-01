@@ -21,14 +21,15 @@ int main(int argc, char ** argv)
     return 1; 
   }
   
-  int opt;
-
+  int     opt;
   options my_options;
+
   my_options.lucky = false;
   my_options.verbose = 0;
 
   if (1 == get_options(argc, argv, &my_options))
   {
+    usage();
     return 1;
   }
 
@@ -38,10 +39,10 @@ int main(int argc, char ** argv)
   //First, search for the page
   reqdata request;
   request.next_choice = NULL;
-  request.req_type = GET_SEARCH;
-  request.res_type = RESP_OK;
-  request.is_lucky = my_options.lucky;
-  request.verbose = my_options.verbose;
+  request.req_type    = GET_SEARCH;
+  request.res_type    = RESP_OK;
+  request.is_lucky    = my_options.lucky;
+  request.verbose     = my_options.verbose;
 
   if (my_options.verbose)
   {
@@ -53,6 +54,7 @@ int main(int argc, char ** argv)
     {
       printf("Lucky mode is OFF\n");
     }
+
     printf("Searching for the term \"%s\".\n", wiki_page);
   }
 
@@ -79,7 +81,6 @@ int main(int argc, char ** argv)
   }
   
   free(wiki_page); 
-
   return 0;
 }
 

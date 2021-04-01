@@ -8,12 +8,20 @@
 */
 void usage()
 {
+  printf("shellwiki: read brief entries from Wikipedia from your terminal!\n");
   printf("Usage: \n\n"); 
   printf("./shellwiki [-l] [article] \n\n\n"); 
   printf("-l: \"I'm feeling lucky\" - get first result.\n");
   printf("-v: verbose\n\n");
 }
 
+/**
+ * @brief parse command line options
+ * @param argc Arg count
+ * @param argv Arg array
+ * @param my_options pointer to options struct
+ * @return 0 on success
+ */
 int get_options(int argc, char ** argv, options * my_options)
 {
   int opt = -1;
@@ -31,7 +39,6 @@ int get_options(int argc, char ** argv, options * my_options)
       break;
 
       default: 
-        usage();
         return 1;
       break;
     }
@@ -43,7 +50,6 @@ int get_options(int argc, char ** argv, options * my_options)
 
   if (optind >= argc)
   {
-    usage();
     return 1;
   }
 

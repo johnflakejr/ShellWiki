@@ -4,6 +4,81 @@
 #include <cjson/cJSON.h>
 #include "../include/communication.h"
 
+#define LIST_SIZE 10
+
+/**
+ * @brief Lets the user choose a page from a cJSON array of pages
+ * 
+ */
+static char * get_choice_from_list (cJSON * pages)
+{
+  bool   choice_made = false;
+  int    page = 0;
+  char   choice = 0;
+  int    int_choice = 0;
+  char * str_choice = NULL;
+  int    size = cJSON_GetArraySize(pages); 
+
+  while (!choice_made)
+  {
+
+    for (int i = 0; i < LIST_SIZE; i++)
+    {
+      if ((i + (page * LIST_SIZE)) < size)
+      {
+        cJSON * link = cJSON_GetArrayItem(pages, i + (page * LIST_SIZE));
+        cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+        printf("%d: %s\n", i, cJSON_Print(text)); 
+      }
+    }
+
+    printf("Page %d\n", page);
+    printf("Enter w for back and d for next page.\t\t\n");
+    printf("Enter the number for the intended artice: ");
+
+    scanf("%c",&choice);
+    getchar();
+
+    if ('d' == choice)
+    {
+      page++;
+
+      if ((page * LIST_SIZE) >= size)
+      {
+        page--;
+      }
+      continue;
+    }
+
+    if ('w' == choice)
+    {
+      page--;
+      if (page < 0)
+      {
+        page = 0;
+      }
+      continue;
+    }
+
+    int_choice = choice - '0';
+    printf("Getting %d\n", int_choice); 
+    
+    if ((int_choice >= 0) && (int_choice < LIST_SIZE))
+    {
+      cJSON * link = cJSON_GetArrayItem(pages, int_choice + (page * 5));
+      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+      str_choice = cJSON_Print(text); 
+      choice_made = true;
+    }
+    else
+    {
+      printf("Invalid choice.\n"); 
+    }
+  }
+
+  return str_choice; 
+}
+
 /**
  * @brief removes the two character '\' 'n' sequence from input
  * @param input string to remove "\n" from
@@ -107,7 +182,7 @@ char * remove_char(char * input, char c)
  *  @brief Given a JSON response from the server, parse it.
  */
 
-char * parse_disambiguation(char * input)
+char * parse_disambiguation(char * input, reqdata userdata)
 {
   char * page_to_request = NULL;
   cJSON * links = NULL;  
@@ -144,6 +219,51 @@ char * parse_disambiguation(char * input)
 
   links = cJSON_GetObjectItemCaseSensitive(page, "links"); 
 
+  if (NULL == links)
+  {
+    cJSON_Delete(resp);
+    return NULL;
+  }
+
+  if (userdata.is_lucky)
+  {
+    cJSON * link = cJSON_GetArrayItem(links, 0);
+    if (NULL == link)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
+    cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
+    if (NULL == text)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
+    page_to_request = cJSON_Print(text); 
+
+    if (NULL == page_to_request)
+    {
+      cJSON_Delete(resp);
+      return NULL;
+    }
+
+    if (userdata.verbose)
+    {
+      printf("\"I'm feeling lucky\" option returned %s.\n", page_to_request);
+    }
+  }
+  else
+  {
+    page_to_request = get_choice_from_list(links);
+  }
+
+
+
+  /*
+  page_to_request = get
+
   int size = cJSON_GetArraySize(links); 
 
   if (0 == size)
@@ -175,83 +295,11 @@ char * parse_disambiguation(char * input)
     printf("Invalid choice.\n"); 
   }
 
+  */
   cJSON_Delete(resp);
   return page_to_request;
 }
 
-
-/**
- * @brief Lets the user choose a page from a cJSON array of pages
- * 
- */
-char * get_choice_from_list (cJSON * pages)
-{
-  bool   choice_made = false;
-  int    page = 0;
-  char   choice = 0;
-  int    int_choice = 0;
-  char * str_choice = NULL;
-  int    size = cJSON_GetArraySize(pages); 
-
-  while (!choice_made)
-  {
-
-    for (int i = 0; i < 5; i++)
-    {
-      if ((i + (page * 5)) < size)
-      {
-        cJSON * link = cJSON_GetArrayItem(pages, i + (page * 5));
-        cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-        printf("%d: %s\n", i, cJSON_Print(text)); 
-      }
-    }
-
-    printf("Page %d\n", page);
-    printf("Enter w for back and d for next page.\t\t\n");
-    printf("Enter the number for the intended artice: ");
-
-    scanf("%c",&choice);
-    getchar();
-
-    if ('d' == choice)
-    {
-      page++;
-
-      if ((page * 5) >= size)
-      {
-        page--;
-      }
-      continue;
-    }
-
-    if ('w' == choice)
-    {
-      page--;
-      if (page < 0)
-      {
-        page = 0;
-      }
-      continue;
-    }
-
-    int_choice = choice - '0';
-    printf("Getting %d\n", int_choice); 
-    
-    if ((int_choice >= 0) && (int_choice < 5))
-    {
-      cJSON * link = cJSON_GetArrayItem(pages, int_choice + (page * 5));
-      cJSON * text = cJSON_GetObjectItemCaseSensitive(link, "title"); 
-      str_choice = cJSON_Print(text); 
-      choice_made = true;
-    }
-    else
-    {
-      printf("Invalid choice.\n"); 
-    }
-  }
-
-  return str_choice; 
-}
 
 /**
  *  @brief Given a JSON response from the server, parse it.
