@@ -14,24 +14,23 @@
 #define RESP_OK 0xFF
 
 typedef struct resp_data {
-  char * data;
-  size_t length;
+    char * data;
+    size_t length;
 } response_data_t;
 
 typedef struct reqdata {
+    //Lets the underlying function know what API request to make
+    int req_type;
 
-  //Lets the underlying function know what API request to make
-  int req_type;
+    //Lets the user know what to do next
+    int res_type;
 
-  //Lets the user know what to do next
-  int res_type;
+    //Response makes it clear that this is a disambiguation
+    char * next_choice; 
 
-  //Response makes it clear that this is a disambiguation
-  char * next_choice; 
+    bool is_lucky;
 
-  bool is_lucky;
-  
-  int verbose;
+    int verbose;
 
 } reqdata_t; 
 

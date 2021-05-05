@@ -4,15 +4,15 @@
 #include <unistd.h> 
 
 /*
-  Prints how to use this simple program
+    Prints how to use this simple program
 */
 void usage()
 {
-  printf("shellwiki: read brief entries from Wikipedia from your terminal!\n");
-  printf("Usage: \n\n"); 
-  printf("./shellwiki [-l] [article] \n\n\n"); 
-  printf("-l: \"I'm feeling lucky\" - get first result.\n");
-  printf("-v: verbose\n\n");
+    printf("shellwiki: read brief entries from Wikipedia from your terminal!\n");
+    printf("Usage: \n\n"); 
+    printf("./shellwiki [-l] [article] \n\n\n"); 
+    printf("-l: \"I'm feeling lucky\" - get first result.\n");
+    printf("-v: verbose\n\n");
 }
 
 /**
@@ -22,59 +22,43 @@ void usage()
  * @param my_options pointer to options struct
  * @return 0 on success
  */
-int get_options(int argc, char ** argv, options * my_options)
+int 
+get_options(int argc, char ** argv, options_t * my_options)
 {
 
-  my_options->lucky = false;
-  my_options->verbose = 0;
+    my_options->lucky = false;
+    my_options->verbose = 0;
 
-  int opt = -1;
+    int opt = -1;
 
-  while (-1 != (opt = getopt(argc, argv, "lv")))
-  {
-    switch (opt)
+    while (-1 != (opt = getopt(argc, argv, "lv")))
     {
-      case 'l':
-        my_options->lucky = true;
-      break;
+        switch (opt)
+        {
+            case 'l':
+                my_options->lucky = true;
+            break;
 
-      case 'v':
-        my_options->verbose = 1;
-      break;
+            case 'v':
+                my_options->verbose = 1;
+            break;
 
-      default: 
-        return 1;
-      break;
+            default: 
+                return 1;
+            break;
+        }
     }
-  }
 
-  //Get the desired page from the user: 
-  //optind is the index given after regular args
-  //printf("Optind: %d\n",optind);
+    //Get the desired page from the user: 
+    //optind is the index given after regular args
+    //printf("Optind: %d\n",optind);
 
-  if (optind >= argc)
-  {
-    return 1;
-  }
+    if (optind >= argc)
+    {
+        return 1;
+    }
 
-  return 0;
-}
-
-/**
- * @brief Given a string, capitalize its first letter.
- * @param input input string
- * @return char * pointer to the modified string
- */
-char * capitalize_arg(char * input)
-{
-  if (NULL == input)
-  {
-    return NULL; 
-  }
-
-  input[0] = toupper(input[0]);
-
-  return input;
+    return 0;
 }
 
 /**
@@ -85,36 +69,38 @@ char * capitalize_arg(char * input)
  */
 char * combine_args_to_page(int argc, char ** argv)
 {
+    //Initialize length to the first arg.    Reallocate as needed. 
+    size_t total_len = 0;
+    char * page = NULL; 
+    int        i; 
 
-  //Initialize length to the first arg.  Reallocate as needed. 
-  size_t total_len = 0;
-  char * page = NULL; 
-  int    i; 
-
-  //Combine arguments
-  for (i = 1; i < argc; i++)
-  {
-    size_t cur_len = strlen(argv[i]); 
-    total_len += cur_len; 
-
-    page = realloc(page, total_len + 1); 
-    if (NULL == page)
+    //Combine arguments
+    for (i = 1; i < argc; i++)
     {
-      return NULL; 
+        size_t cur_len = strlen(argv[i]); 
+        total_len += cur_len; 
+
+        page = realloc(page, total_len + 1); 
+        if (NULL == page)
+        {
+            return NULL; 
+        }
+
+        //Capitalize argument
+        char * cap_arg = argv[i];
+        cap_arg[0] = toupper(cap_arg[0]);
+        
+        strncpy(page + (total_len - cur_len), cap_arg, cur_len); 
+
+        if (i < (argc - 1))
+        {
+            strncpy(page + (total_len), "_", sizeof(char)); 
+            total_len++; 
+        }
+
     }
-
-    
-    strncpy(page + (total_len - cur_len), capitalize_arg(argv[i]), cur_len); 
-
-    if (i < (argc - 1))
-    {
-      strncpy(page + (total_len), "_", sizeof(char)); 
-      total_len++; 
-    }
-
-  }
-  page[total_len] = '\0'; 
-  return page; 
+    page[total_len] = '\0'; 
+    return page; 
 }
 
 //End of file
